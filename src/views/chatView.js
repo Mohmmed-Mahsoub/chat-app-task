@@ -1,3 +1,8 @@
+import { store } from "../state/index.js";
+import { toggleThemeAction } from "../actions/index.js";
+import { renderHeader } from "./headerView.js";
+import { getTheme } from "../state/index.js";
+
 // Main template
 const getChatTemplate = () => `
   <div class="chat-container" data-theme="light">
@@ -7,6 +12,14 @@ const getChatTemplate = () => `
   </div>
 `;
 
+// Track previous state for optimal updates
+let previousState = null;
+
+// Check if theme changed
+const themeChanged = (prevState, currentState) => {
+  return getTheme(prevState) !== getTheme(currentState);
+};
+
 // Main app initialization
 export const initializeApp = () => {
   const appContainer = document.getElementById("app");
@@ -14,27 +27,31 @@ export const initializeApp = () => {
     console.error("App container not found");
     return;
   }
-
   appContainer.innerHTML = getChatTemplate();
-
   const chatContainer = appContainer.querySelector(".chat-container");
 
-  const headerContainer = chatContainer.querySelector("#chatHeader");
-  const messagesContainer = chatContainer.querySelector("#messagesContainer");
-  const footerContainer = chatContainer.querySelector("#chatFooter");
+  // Initial render
+  const initialState = store.getState();
+  previousState = initialState;
 
-  headerContainer.innerHTML = `
-    <div class="chat-header">
-      <h1 class="chat-title">Pidima AI Assistant</h1>
-      <div class="theme-toggle" id="themeToggle">
-        <span class="toggle-label">dark</span>
-        <div class="toggle-slider"></div>
-      </div>
-    </div>
-  `;
+  updateView(initialState, chatContainer, true);
+
+  // Set up event listeners
+  setupEventListeners();
+
+  // Subscribe to state changes
+  store.subscribe((state) => {
+    updateView(state, chatContainer, false);
+    previousState = state;
+  });
+};
+
+const updateView = (state, container, isInitialRender = false) => {
+  const headerContainer = container.querySelector("#chatHeader");
+  const messagesContainer = container.querySelector("#messagesContainer");
+  const footerContainer = container.querySelector("#chatFooter");
 
   messagesContainer.innerHTML = `
-
     <div class="message sent">
       <div class="message-content">message content</div>
       <div class="message-time">time</div>
@@ -59,4 +76,25 @@ export const initializeApp = () => {
         </button>
       </div>
     `;
+
+  // Update theme if changed
+  if (isInitialRender || themeChanged(previousState, state)) {
+    const theme = getTheme(state);
+    container.setAttribute("data-theme", theme);
+
+    // Re-render header when theme changes (for theme label update)
+    if (headerContainer) renderHeader(state, headerContainer);
+  }
+};
+
+const setupEventListeners = () => {
+  // Use event delegation for dynamic elements
+  document.addEventListener("click", (event) => {
+    if (
+      event.target.id === "themeToggle" ||
+      event.target.closest("#themeToggle")
+    ) {
+      toggleThemeAction();
+    }
+  });
 };
