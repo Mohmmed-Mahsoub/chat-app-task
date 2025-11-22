@@ -73,6 +73,7 @@ body {
   padding: 1rem 1.5rem;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
 }
 
 .chat-title {
