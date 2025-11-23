@@ -2,6 +2,7 @@ import { store } from "../state/index.js";
 import { toggleThemeAction } from "../actions/index.js";
 import { renderHeader } from "./headerView.js";
 import { getTheme } from "../state/index.js";
+import { renderInputArea } from "./inputView.js";
 
 // Main template
 const getChatTemplate = () => `
@@ -18,6 +19,15 @@ let previousState = null;
 // Check if theme changed
 const themeChanged = (prevState, currentState) => {
   return getTheme(prevState) !== getTheme(currentState);
+};
+const createMessage = () => {
+  const inputElement = document.getElementById("messageInput");
+  const content = inputElement?.value?.trim();
+  if (content) {
+    console.log("createMessage", content);
+    //clear input
+    inputElement.value = "";
+  }
 };
 
 // Main app initialization
@@ -61,21 +71,6 @@ const updateView = (state, container, isInitialRender = false) => {
       <div class="message-time">time</div>
     </div>
   `;
-  footerContainer.innerHTML = `
-      <div class="input-container">
-        <input 
-          type="text" 
-          class="message-input" 
-          id="messageInput" 
-          placeholder="Type your message..." 
-          maxlength="500"
-          value=""
-        >
-        <button class="send-button" id="sendButton">
-          Send
-        </button>
-      </div>
-    `;
 
   // Update theme if changed
   if (isInitialRender || themeChanged(previousState, state)) {
@@ -85,6 +80,9 @@ const updateView = (state, container, isInitialRender = false) => {
     // Re-render header when theme changes (for theme label update)
     if (headerContainer) renderHeader(state, headerContainer);
   }
+
+  // Always update input area (it handles its own optimizations)
+  if (footerContainer) renderInputArea(footerContainer);
 };
 
 const setupEventListeners = () => {
@@ -95,6 +93,17 @@ const setupEventListeners = () => {
       event.target.closest("#themeToggle")
     ) {
       toggleThemeAction();
+    }
+    if (
+      event.target.id === "sendButton" ||
+      event.target.closest("#sendButton")
+    ) {
+      createMessage();
+    }
+  });
+  document.addEventListener("keypress", (event) => {
+    if (event.target.id === "messageInput" && event.key === "Enter") {
+      createMessage();
     }
   });
 };
