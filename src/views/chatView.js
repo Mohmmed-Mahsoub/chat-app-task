@@ -76,17 +76,6 @@ const updateView = (state, container, isInitialRender = false) => {
   const messagesContainer = container.querySelector("#messagesContainer");
   const footerContainer = container.querySelector("#chatFooter");
 
-  messagesContainer.innerHTML = `
-    <div class="message sent">
-      <div class="message-content">message content</div>
-      <div class="message-time">time</div>
-    </div>
-    <div class="message received">
-      <div class="message-content">message content</div>
-      <div class="message-time">time</div>
-    </div>
-  `;
-
   // Update theme if changed
   if (isInitialRender || themeChanged(previousState, state)) {
     const theme = getTheme(state);
