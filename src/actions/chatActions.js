@@ -1,4 +1,4 @@
-import { addMessage, store } from "../state/index.js";
+import { addMessage, setIsIndecator, store } from "../state/index.js";
 import { generateId, formatTime, escapeHtml } from "../utils/helpers.js";
 
 // Pure message creation
@@ -13,6 +13,7 @@ const createMessage = (content, isSent = false) => ({
 // Action creators
 export const sendMessage = (content) => {
   if (!content.trim()) return store.getState();
+  updateIndecator(true);
 
   const userMessage = createMessage(content, true);
   store.setState((state) => addMessage(userMessage, state));
@@ -38,6 +39,11 @@ export const simulateAIResponse = () => {
     const randomResponse =
       responses[Math.floor(Math.random() * responses.length)];
     const aiMessage = createMessage(randomResponse, false);
+    //hide indecator
+    updateIndecator(false);
     store.setState((state) => addMessage(aiMessage, state));
   }, delay);
 };
+
+export const updateIndecator = (isIndecator) =>
+  store.setState((state) => setIsIndecator(state, isIndecator));

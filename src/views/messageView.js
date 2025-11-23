@@ -1,11 +1,9 @@
 import { createElement, appendChildren } from "../utils/domHelpers.js";
-import { getMessages } from "../state/index.js";
-
+import { getIsIndecator, getMessages } from "../state/index.js";
 let lastMessageCount = 0;
 
 export const renderMessages = (state, container) => {
   const messages = getMessages(state);
-
   // Only re-render if messages actually changed
   if (messages.length === lastMessageCount && container.children.length > 0) {
     // Check if we just need to append new messages
@@ -18,7 +16,12 @@ export const renderMessages = (state, container) => {
     // Full re-render
     container.innerHTML = "";
     const messageElements = messages.map(createMessageElement);
-    appendChildren(container, messageElements);
+
+    const isIndecator = getIsIndecator(state);
+    const childrenToAppend = isIndecator
+      ? [...messageElements, createIndecatorElement()]
+      : messageElements;
+    appendChildren(container, childrenToAppend);
   }
 
   lastMessageCount = messages.length;
@@ -36,6 +39,18 @@ const createMessageElement = (message) => {
   `;
   messageDiv.style.animation = "fadeIn 0.3s ease-out";
   return messageDiv;
+};
+const createIndecatorElement = () => {
+  const typingIndicator = createElement("div", "typing-indicator");
+  typingIndicator.innerHTML = `
+    <div class="typing-dots">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+
+  return typingIndicator;
 };
 
 const scrollToBottom = (container) => {

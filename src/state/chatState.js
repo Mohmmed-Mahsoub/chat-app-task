@@ -9,6 +9,7 @@ export const initialChatState = {
       formattedTime: "Just now",
     },
   ],
+  isIndecator: false,
 };
 
 // State selectors
@@ -20,5 +21,14 @@ export const addMessage = (message, state) => ({
   chat: {
     ...state.chat,
     messages: [...state.chat.messages, message],
+  },
+});
+
+export const getIsIndecator = (state) => state.chat.isIndecator;
+export const setIsIndecator = (state, isIndecator) => ({
+  ...state,
+  chat: {
+    ...state.chat,
+    isIndecator: isIndecator,
   },
 });
