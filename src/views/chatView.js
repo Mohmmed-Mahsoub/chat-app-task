@@ -1,8 +1,10 @@
-import { store } from "../state/index.js";
+import { getMessages, store } from "../state/index.js";
 import { toggleThemeAction } from "../actions/index.js";
 import { renderHeader } from "./headerView.js";
 import { getTheme } from "../state/index.js";
 import { renderInputArea } from "./inputView.js";
+import { sendMessage } from "../actions/chatActions.js";
+import { renderMessages } from "./messageView.js";
 
 // Main template
 const getChatTemplate = () => `
@@ -20,11 +22,24 @@ let previousState = null;
 const themeChanged = (prevState, currentState) => {
   return getTheme(prevState) !== getTheme(currentState);
 };
+// Check if messages changed (for optimal rendering)
+const messagesChanged = (prevState, currentState) => {
+  const prevMessages = getMessages(prevState);
+  const currentMessages = getMessages(currentState);
+
+  if (prevMessages.length !== currentMessages.length) return true;
+
+  // Check if any message content changed
+  return prevMessages.some((prevMsg, index) => {
+    const currentMsg = currentMessages[index];
+    return !currentMsg || prevMsg.content !== currentMsg.content;
+  });
+};
 const createMessage = () => {
   const inputElement = document.getElementById("messageInput");
   const content = inputElement?.value?.trim();
   if (content) {
-    console.log("createMessage", content);
+    sendMessage(content);
     //clear input
     inputElement.value = "";
   }
@@ -80,7 +95,10 @@ const updateView = (state, container, isInitialRender = false) => {
     // Re-render header when theme changes (for theme label update)
     if (headerContainer) renderHeader(state, headerContainer);
   }
-
+  // Update messages if changed
+  if (isInitialRender || messagesChanged(previousState, state)) {
+    if (messagesContainer) renderMessages(state, messagesContainer);
+  }
   // Always update input area (it handles its own optimizations)
   if (footerContainer) renderInputArea(footerContainer);
 };
