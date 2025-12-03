@@ -1,18 +1,28 @@
 import { createElement, appendChildren } from "../utils/domHelpers.js";
 import { getIsIndecator, getMessages } from "../state/index.js";
 
+let lastRenderedCount = 0;
+
 export const renderMessages = (state, container) => {
   const messages = getMessages(state);
+  const isIndicator = getIsIndecator(state);
 
-  // Full re-render
-  container.innerHTML = "";
-  const messageElements = messages.map(createMessageElement);
+  // Only render new messages
+  if (messages.length > lastRenderedCount) {
+    const newMessages = messages.slice(lastRenderedCount);
+    const newElements = newMessages.map(createMessageElement);
+    appendChildren(container, newElements);
+    lastRenderedCount = messages.length;
+  }
 
-  const isIndecator = getIsIndecator(state);
-  const childrenToAppend = isIndecator
-    ? [...messageElements, createIndecatorElement()]
-    : messageElements;
-  appendChildren(container, childrenToAppend);
+  // Handle typing indicator separately
+  const existingIndicator = container.querySelector('.typing-indicator');
+
+  if (isIndicator && !existingIndicator) {
+    container.appendChild(createIndecatorElement());
+  } else if (!isIndicator && existingIndicator) {
+    existingIndicator.remove();
+  }
 
   scrollToBottom(container);
 };
