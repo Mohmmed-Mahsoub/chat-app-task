@@ -1,10 +1,13 @@
-import { getMessages, store } from "../state/index.js";
+import { getMessages, getToast, store } from "../state/index.js";
 import { toggleThemeAction } from "../actions/index.js";
 import { renderHeader } from "./headerView.js";
 import { getTheme } from "../state/index.js";
 import { renderInputArea } from "./inputView.js";
 import { sendMessage } from "../actions/chatActions.js";
 import { renderMessages } from "./messageView.js";
+import { validateMessage } from "../utils/validation.js";
+import { showToastAction } from "../actions/index.js";
+import { renderToast } from "./toastView.js";
 
 // Main template
 const getChatTemplate = () => `
@@ -12,6 +15,7 @@ const getChatTemplate = () => `
     <header id="chatHeader"></header>
     <main class="messages-container" id="messagesContainer"></main>
     <footer id="chatFooter"></footer>
+    <div id="toastContainer"></div>
   </div>
 `;
 
@@ -35,10 +39,32 @@ const messagesChanged = (prevState, currentState) => {
     return !currentMsg || prevMsg.content !== currentMsg.content;
   });
 };
+
+const toastChanged = (prevState, currentState) => {
+  return getToast(prevState) !== getToast(currentState);
+};
+
+// Check if input area needs rendering (only on initial render)
+const inputNeedsRender = (isInitialRender, container) => {
+  return isInitialRender || !container.querySelector(".input-container");
+};
+
 const createMessage = () => {
   const inputElement = document.getElementById("messageInput");
   const content = inputElement?.value?.trim();
-  if (content) {
+
+  const validation = validateMessage(content);
+
+  if (!validation.isValid) {
+    console.warn("Invalid message:", validation.errors);
+    // Could trigger UI notification here
+    showToastAction({
+      isShow: true,
+      message: validation.errors.join("\n"),
+      type: "error",
+    });
+    return
+  } else {
     sendMessage(content);
     //clear input
     inputElement.value = "";
@@ -75,6 +101,7 @@ const updateView = (state, container, isInitialRender = false) => {
   const headerContainer = container.querySelector("#chatHeader");
   const messagesContainer = container.querySelector("#messagesContainer");
   const footerContainer = container.querySelector("#chatFooter");
+  const toastContainer = container.querySelector("#toastContainer");
 
   // Update theme if changed
   if (isInitialRender || themeChanged(previousState, state)) {
@@ -88,8 +115,16 @@ const updateView = (state, container, isInitialRender = false) => {
   if (isInitialRender || messagesChanged(previousState, state)) {
     if (messagesContainer) renderMessages(state, messagesContainer);
   }
-  // Always update input area (it handles its own optimizations)
-  if (footerContainer) renderInputArea(footerContainer);
+
+  // Update input area only if needed (initial render or missing)
+  if (inputNeedsRender(isInitialRender, container)) {
+    if (footerContainer) renderInputArea(footerContainer);
+  }
+
+  // Update toast if changed
+  if (toastChanged(previousState, state)) {
+    renderToast(toastContainer, state);
+  }
 };
 
 const setupEventListeners = () => {
