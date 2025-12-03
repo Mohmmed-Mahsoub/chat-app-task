@@ -3,7 +3,7 @@ export const createStore = (initialState) => {
   let state = initialState;
   let subscribers = [];
 
-  const getState = () => ({ ...state });
+  const getState = () => structuredClone(state);
 
   const setState = (updater) => {
     const newState = typeof updater === "function" ? updater(state) : updater;
